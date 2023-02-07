@@ -7,7 +7,9 @@ uses
   FireDAC.Stan.Error, FireDAC.UI.Intf, FireDAC.Phys.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys, FireDAC.FMXUI.Wait,
   Data.DB, FireDAC.Comp.Client, FireDAC.Phys.FB, FireDAC.Phys.FBDef,
-  FireDAC.Phys.IBBase, DataSet.Serialize.Config;
+  FireDAC.Phys.IBBase,
+
+  DataSet.Serialize, DataSet.Serialize.Config, System.JSON, FireDAC.DApt;
 
 type
   TDM = class(TDataModule)
@@ -20,6 +22,8 @@ type
     { Private declarations }
   public
     { Public declarations }
+    function Login(email, senha: String): TJsonObject;
+    function CriarConta(nome, email, senha: String): TJsonObject;
   end;
 
 var
@@ -61,6 +65,65 @@ begin
   TDataSetSerializeConfig.GetInstance.Import.DecimalSeparator := '.';
 
   Conn.Connected := True;
+end;
+
+function TDM.Login(email, senha: String): TJsonObject;
+var
+  qry: TFDQuery;
+begin
+  if (email = '') or (senha = '') then
+    raise Exception.Create('Informe o e-mail e a senha!');
+
+  try
+    qry := TFDQuery.Create(nil);
+    qry.Connection := Conn;
+
+    with qry do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select id_usuario, nome, email');
+      SQL.Add('from tab_usuario');
+      SQL.Add('where email = :email and senha = :senha');
+      ParamByName('email').Value := email;
+      ParamByName('senha').Value := senha;
+      Open;
+    end;
+
+    Result := qry.ToJSONObject;
+  finally
+    FreeAndNil(qry);
+  end;
+end;
+
+function TDM.CriarConta(nome, email, senha: String): TJsonObject;
+var
+  qry: TFDQuery;
+begin
+  if (nome = '') or (email = '') or (senha = '') then
+    raise Exception.Create('Informe o nome, e-mail e senha!');
+
+  try
+    qry := TFDQuery.Create(nil);
+    qry.Connection := Conn;
+
+    with qry do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('insert into tab_usuario (nome, email, senha)');
+      SQL.Add('values (:nome, :email, :senha)');
+      SQL.Add('returning id_usuario, nome, email');
+      ParamByName('nome').Value := email;
+      ParamByName('email').Value := email;
+      ParamByName('senha').Value := senha;
+      Open;
+    end;    //01:33 hs
+
+    Result := qry.ToJSONObject;
+  finally
+    FreeAndNil(qry);
+  end;
 end;
 
 end.

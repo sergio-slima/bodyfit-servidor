@@ -24,7 +24,8 @@ implementation
 
 {$R *.fmx}
 
-uses Horse, Horse.Jhonson, Horse.BasicAuthentication, Horse.CORS, DataSet.Serialize.Config;
+uses Horse, Horse.Jhonson, Horse.BasicAuthentication, Horse.CORS,
+      DataSet.Serialize.Config, UControllers;
 
 procedure TFrmServidor.FormShow(Sender: TObject);
 begin
@@ -36,6 +37,8 @@ begin
   begin
     Result := AUsername.Equals('Sergio') and APassword.Equals('123');
   end));
+
+  UControllers.RegistrarRotas;
 
   THorse.Listen(3000, procedure(Horse: THorse)
   begin
