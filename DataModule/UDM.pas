@@ -24,6 +24,9 @@ type
     { Public declarations }
     function Login(email, senha: String): TJsonObject;
     function CriarConta(nome, email, senha: String): TJsonObject;
+    function EditarUsuario(id_usuario: integer; nome, email: String): TJsonObject;
+    function EditarSenha(id_usuario: integer; senha: String): TJsonObject;
+    function ListarTreinos(id_usuario: integer): TJsonArray;
   end;
 
 var
@@ -114,13 +117,104 @@ begin
       SQL.Add('insert into tab_usuario (nome, email, senha)');
       SQL.Add('values (:nome, :email, :senha)');
       SQL.Add('returning id_usuario, nome, email');
-      ParamByName('nome').Value := email;
+      ParamByName('nome').Value := nome;
       ParamByName('email').Value := email;
       ParamByName('senha').Value := senha;
       Open;
-    end;    //01:33 hs
+    end;
 
     Result := qry.ToJSONObject;
+  finally
+    FreeAndNil(qry);
+  end;
+end;
+
+function TDM.EditarUsuario(id_usuario: integer; nome, email: String): TJsonObject;
+var
+  qry: TFDQuery;
+begin
+  if (id_usuario <= 0) or (nome = '') or (email = '') then
+    raise Exception.Create('Informe o usuário, nome e e-mail!');
+
+  try
+    qry := TFDQuery.Create(nil);
+    qry.Connection := Conn;
+
+    with qry do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('update tab_usuario set nome = :nome, email = :email');
+      SQL.Add('where id_usuario = :id_usuario');
+      SQL.Add('returning id_usuario');
+      ParamByName('id_usuario').Value := id_usuario;
+      ParamByName('nome').Value := nome;
+      ParamByName('email').Value := email;
+      Open;
+    end;
+
+    Result := qry.ToJSONObject;
+  finally
+    FreeAndNil(qry);
+  end;
+end;
+
+function TDM.EditarSenha(id_usuario: integer; senha: String): TJsonObject;
+var
+  qry: TFDQuery;
+begin
+  if (id_usuario <= 0) or (senha = '') then
+    raise Exception.Create('Informe o usuário e a senha!');
+
+  try
+    qry := TFDQuery.Create(nil);
+    qry.Connection := Conn;
+
+    with qry do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('update tab_usuario set senha = :senha');
+      SQL.Add('where id_usuario = :id_usuario');
+      SQL.Add('returning id_usuario');
+      ParamByName('id_usuario').Value := id_usuario;
+      ParamByName('senha').Value := senha;
+      Open;
+    end;
+
+    Result := qry.ToJSONObject;
+  finally
+    FreeAndNil(qry);
+  end;
+end;
+
+function TDM.ListarTreinos(id_usuario: integer): TJsonArray;
+var
+  qry: TFDQuery;
+begin
+  if (id_usuario <= 0) then
+    raise Exception.Create('Informe o usuário!');
+
+  try
+    qry := TFDQuery.Create(nil);
+    qry.Connection := Conn;
+
+    with qry do
+    begin
+      Close;
+      SQL.Clear;
+      SQL.Add('select t.id_treino, t.nome as treino, t.descricao as descr_treino, t.dia_semana,');
+      SQL.Add('e.nome as exercicio, e.descricao as descr_exercicio, e.url_video');
+      SQL.Add('from tab_treino t');
+      SQL.Add('join tab_treino_exercicio te on (te.id_treino = t.id_treino)');
+      SQL.Add('join tab_exercicio e on (e.id_exercicio = te.id_exercicio)');
+      SQL.Add('where t.id_usuario = :id_usuario');
+      SQL.Add('order by t.dia_semana, e.nome');
+      ParamByName('id_usuario').Value := id_usuario;
+      Open;
+    end;
+
+    Result := qry.ToJSONArray;
   finally
     FreeAndNil(qry);
   end;
