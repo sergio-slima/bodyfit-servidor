@@ -204,7 +204,7 @@ begin
       Close;
       SQL.Clear;
       SQL.Add('select t.id_treino, t.nome as treino, t.descricao as descr_treino, t.dia_semana,');
-      SQL.Add('e.nome as exercicio, e.descricao as descr_exercicio, e.url_video');
+      SQL.Add('e.id_exercicio, e.nome as exercicio, e.descricao as descr_exercicio, e.url_video, te.duracao');
       SQL.Add('from tab_treino t');
       SQL.Add('join tab_treino_exercicio te on (te.id_treino = t.id_treino)');
       SQL.Add('join tab_exercicio e on (e.id_exercicio = te.id_exercicio)');
